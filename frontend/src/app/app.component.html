@@ -1,0 +1,11 @@
+<h2>Customer List</h2>
+<input [(ngModel)]="newCustomer.name" placeholder="Name">
+<input [(ngModel)]="newCustomer.email" placeholder="Email">
+<button (click)="addCustomer()">Add</button>
+
+<ul>
+  <li *ngFor="let customer of customers">
+    {{ customer.name }} - {{ customer.email }}
+    <button (click)="deleteCustomer(customer.id)">Delete</button>
+  </li>
+</ul>
