@@ -12,13 +12,13 @@
         src: "{{ item }}"
         dest: /home/ubuntu/k8s/
       with_items:
-        - /var/lib/jenkins/workspace/fullstack-app/k8s/mysql-secret.yaml
-        - /var/lib/jenkins/workspace/fullstack-app/k8s/mysql-deployment.yaml
-        - /var/lib/jenkins/workspace/fullstack-app/k8s/mysql-service.yaml   # خدمة MySQL
-        - /var/lib/jenkins/workspace/fullstack-app/k8s/backend-deployment.yaml
-        - /var/lib/jenkins/workspace/fullstack-app/k8s/backend-service.yaml # خدمة Backend
-        - /var/lib/jenkins/workspace/fullstack-app/k8s/frontend-deployment.yaml
-        - /var/lib/jenkins/workspace/fullstack-app/k8s/frontend-service.yaml
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/mysql-secret.yaml
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/mysql-deployment.yaml
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/mysql-service.yaml   # خدمة MySQL
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/backend-deployment.yaml
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/backend-service.yaml # خدمة Backend
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/frontend-deployment.yaml
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/frontend-service.yaml
 
     # ===== MySQL =====
     - name: Delete old MySQL deployment if exists
