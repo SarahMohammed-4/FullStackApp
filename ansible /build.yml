@@ -1,0 +1,19 @@
+---
+- name: Build Docker images for fullstack app
+  hosts: localhost
+  tasks:
+    - name: Build backend image
+      community.docker.docker_image:
+        name: sarah1mo/backend-demo
+        build:
+          path: ./demo
+          nocache: true   # 👈 يكسر الكاش للباك اند
+        source: build
+
+    - name: Build frontend image
+      community.docker.docker_image:
+        name: sarah1mo/frontend-app
+        build:
+          path: ./frontend
+          nocache: true   # 👈 يكسر الكاش للفرونت اند
+        source: build
