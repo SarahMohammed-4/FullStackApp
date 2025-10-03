@@ -40,7 +40,7 @@ pipeline {
                         '''
 
                         // 🔹 Backend Docker Image
-                        sh "docker build -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -f demo/Dockerfile demo"
+                        sh "docker build --no-cache -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -f demo/Dockerfile demo"
                         sh "docker push ${BACKEND_IMAGE}:${BUILD_NUMBER}"
 
                         // 🔹 Frontend Docker Image
