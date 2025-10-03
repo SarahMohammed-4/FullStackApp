@@ -1,0 +1,51 @@
+---
+- name: Deploy Fullstack App on Kubernetes
+  hosts: K8sServer
+  become: yes
+  environment:
+    KUBECONFIG: /home/ubuntu/.kube/config
+
+  tasks:
+    # نسخ جميع ملفات الـ manifests
+    - name: Copy k8s manifests to master
+      copy:
+        src: "{{ item }}"
+        dest: /home/ubuntu/k8s/
+      with_items:
+        - /var/lib/jenkins/workspace/fullstack-app/k8s/mysql-secret.yaml
+        - /var/lib/jenkins/workspace/fullstack-app/k8s/mysql-deployment.yaml
+        - /var/lib/jenkins/workspace/fullstack-app/k8s/mysql-service.yaml   # خدمة MySQL
+        - /var/lib/jenkins/workspace/fullstack-app/k8s/backend-deployment.yaml
+        - /var/lib/jenkins/workspace/fullstack-app/k8s/backend-service.yaml # خدمة Backend
+        - /var/lib/jenkins/workspace/fullstack-app/k8s/frontend-deployment.yaml
+        - /var/lib/jenkins/workspace/fullstack-app/k8s/frontend-service.yaml
+
+    # ===== MySQL =====
+    - name: Delete old MySQL deployment if exists
+      command: kubectl delete -f /home/ubuntu/k8s/mysql-deployment.yaml --ignore-not-found=true
+
+    - name: Apply MySQL deployment
+      command: kubectl apply -f /home/ubuntu/k8s/mysql-deployment.yaml
+
+    - name: Apply MySQL service
+      command: kubectl apply -f /home/ubuntu/k8s/mysql-service.yaml
+
+    # ===== Backend =====
+    - name: Delete old Backend deployment if exists
+      command: kubectl delete -f /home/ubuntu/k8s/backend-deployment.yaml --ignore-not-found=true
+
+    - name: Apply Backend deployment
+      command: kubectl apply -f /home/ubuntu/k8s/backend-deployment.yaml
+
+    - name: Apply Backend service
+      command: kubectl apply -f /home/ubuntu/k8s/backend-service.yaml
+
+    # ===== Frontend =====
+    - name: Delete old Frontend deployment if exists
+      command: kubectl delete -f /home/ubuntu/k8s/frontend-deployment.yaml --ignore-not-found=true
+
+    - name: Apply Frontend deployment
+      command: kubectl apply -f /home/ubuntu/k8s/frontend-deployment.yaml
+
+    - name: Apply Frontend service
+      command: kubectl apply -f /home/ubuntu/k8s/frontend-service.yaml
