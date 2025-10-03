@@ -1,0 +1,20 @@
+---
+- name: Push Docker images to DockerHub
+  hosts: localhost
+  tasks:
+    - name: Login to DockerHub
+      community.docker.docker_login:
+        username: "{{ docker_username }}"
+        password: "{{ docker_password }}"
+
+    - name: Push backend image
+      community.docker.docker_image:
+        name: sarah1mo/backend-demo
+        push: true
+        source: local
+
+    - name: Push frontend image
+      community.docker.docker_image:
+        name: sarah1mo/frontend-app
+        push: true
+        source: local
