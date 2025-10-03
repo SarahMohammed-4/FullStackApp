@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: sarah1mo/backend-demo
+          imagePullPolicy: Always   # يسحب آخر نسخة دائمًا
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysql-service:3306/mydb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: root
