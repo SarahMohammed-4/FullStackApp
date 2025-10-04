@@ -14,7 +14,7 @@ pipeline {
             steps {
                 git branch: 'main',
                     credentialsId: 'github-creds',
-                    url: 'git@github.com:SarahMohammed-4/fullstack-app.git'
+                    url: 'git@github.com:SarahMohammed-4/FullStackApp.git'
             }
         }
 
