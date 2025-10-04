@@ -5,7 +5,7 @@ metadata:
 spec:
   selector:
     app: frontend
-  type: ClusterIP   # ✅ خليه ClusterIP
+  type: NodePort   # ✅ خليه ClusterIP
   ports:
     - name: http
       protocol: TCP
