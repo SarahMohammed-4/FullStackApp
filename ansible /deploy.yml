@@ -50,3 +50,6 @@
 
     - name: Apply Frontend service
       command: kubectl apply -f /home/ubuntu/k8s/frontend-service.yaml
+
+    - name: Apply Ingress
+      command: kubectl apply -f /home/ubuntu/k8s/ingress.yaml
