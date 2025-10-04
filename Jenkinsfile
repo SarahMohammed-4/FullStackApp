@@ -10,11 +10,20 @@ pipeline {
     }
 
     stages {
+        // 🔹 Stage يسحب الكود آخر نسخة من GitHub
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    credentialsId: 'github-creds',
-                    url: 'git@github.com:SarahMohammed-4/FullStackApp.git'
+                // هذا يضمن التحديث
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [[$class: 'CleanBeforeCheckout']], // يمسح القديم قبل السحب
+                    userRemoteConfigs: [[
+                        url: 'git@github.com:SarahMohammed-4/FullStackApp.git',
+                        credentialsId: 'github-creds'
+                    ]]
+                ])
             }
         }
 
