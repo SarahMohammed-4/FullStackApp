@@ -10,3 +10,4 @@ spec:
     - protocol: TCP
       port: 8080       # البورت اللي يكشفه السيرفس
       targetPort: 8080 # البورت داخل البود
+      nodePort: 30101    
