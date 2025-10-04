@@ -19,7 +19,7 @@
         - /var/lib/jenkins/workspace/FullStackApp/k8s/backend-service.yaml # خدمة Backend
         - /var/lib/jenkins/workspace/FullStackApp/k8s/frontend-deployment.yaml
         - /var/lib/jenkins/workspace/FullStackApp/k8s/frontend-service.yaml
-        - /var/lib/jenkins/workspace/FullStackApp/k8s/ingress.yaml
+    #     - /var/lib/jenkins/workspace/FullStackApp/k8s/ingress.yaml
 
     # ===== MySQL =====
     - name: Delete old MySQL deployment if exists
@@ -50,6 +50,7 @@
 
     - name: Apply Frontend service
       command: kubectl apply -f /home/ubuntu/k8s/frontend-service.yaml
-
-    - name: Apply Ingress
-      command: kubectl apply -f /home/ubuntu/k8s/ingress.yaml
+      
+    # ===== Frontend =====
+    #  - name: Apply Ingress
+    #  command: kubectl apply -f /home/ubuntu/k8s/ingress.yaml
