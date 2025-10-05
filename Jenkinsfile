@@ -10,6 +10,7 @@ pipeline {
     }
 
     stages {
+
         // 🔹 Stage 1: سحب الكود من GitHub
         stage('Checkout') {
             steps {
@@ -35,7 +36,28 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 3: بناء ودفع صور Docker
+        // 🔹 Stage 3: رفع ملف الـ jar إلى Nexus
+        stage('Upload_Backend') {
+            steps {
+                nexusArtifactUploader(
+                    artifacts: [[
+                        artifactId: 'demo',
+                        classifier: '',
+                        file: 'demo/target/demo-0.0.1-SNAPSHOT.jar',
+                        type: 'jar'
+                    ]],
+                    credentialsId: 'Nexus',             // اسم بيانات الدخول في Jenkins Credentials
+                    groupId: 'com.example',             // نفس الـ groupId من الـ POM
+                    nexusUrl: '3.124.12.6:8081',        // عنوان السيرفر
+                    nexusVersion: 'nexus3',             // نوع النكسس
+                    protocol: 'http',
+                    repository: 'backend',              // اسم الريبو داخل Nexus
+                    version: "${BUILD_NUMBER}"          // رقم الإصدار = رقم البناء في Jenkins
+                )
+            }
+        }
+
+        // 🔹 Stage 4: بناء ودفع صور Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -69,7 +91,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 4: تحديث تاغات الصور في ملفات الـ K8s
+        // 🔹 Stage 5: تحديث تاغات الصور في ملفات الـ K8s
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
@@ -80,7 +102,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 5: النشر على Kubernetes باستخدام Ansible
+        // 🔹 Stage 6: النشر على Kubernetes باستخدام Ansible
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
