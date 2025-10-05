@@ -5,10 +5,9 @@ metadata:
 spec:
   selector:
     app: frontend
-  type: NodePort   # ✅ خليه ClusterIP
+  type: ClusterIP   # ✅ خليه ClusterIP
   ports:
     - name: http
       protocol: TCP
       port: 80         # البورت اللي ينكشف داخليًا
       targetPort: 80   # البورت داخل البود
-      nodePort: 30100   
