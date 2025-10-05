@@ -48,7 +48,7 @@ pipeline {
                     ]],
                     credentialsId: 'Nexus',             // اسم بيانات الدخول في Jenkins Credentials
                     groupId: 'com.example',             // نفس الـ groupId من الـ POM
-                    nexusUrl: '3.124.12.6:8081',        // عنوان السيرفر
+                    nexusUrl: '3.127.210.51:8081',        // عنوان السيرفر
                     nexusVersion: 'nexus3',             // نوع النكسس
                     protocol: 'http',
                     repository: 'backend',              // اسم الريبو داخل Nexus
