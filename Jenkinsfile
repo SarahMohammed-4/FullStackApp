@@ -46,7 +46,7 @@ pipeline {
                     script {
                         sh """
                             echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
-                            echo "🚀 Building and pushing Docker images..."
+                            echo " Building and pushing Docker images..."
 
                             # Build & Push Backend
                             docker build --no-cache -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -f demo/Dockerfile demo
@@ -73,7 +73,7 @@ pipeline {
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
-                    echo "🧩 Updating image tags in deployment files..."
+                    echo " Updating image tags in deployment files..."
                     sed -i "s|sarah1mo/backend-demo:.*|sarah1mo/backend-demo:${BUILD_NUMBER}|g" k8s/backend-deployment.yaml
                     sed -i "s|sarah1mo/frontend-app:.*|sarah1mo/frontend-app:${BUILD_NUMBER}|g" k8s/frontend-deployment.yaml
                 """
