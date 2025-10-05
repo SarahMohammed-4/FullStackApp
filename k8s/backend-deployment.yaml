@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: sarah1mo/backend-demo
+          image: sarah1mo/backend-demo:latest
           imagePullPolicy: Always   # يسحب آخر نسخة دائمًا
           ports:
             - containerPort: 8080
