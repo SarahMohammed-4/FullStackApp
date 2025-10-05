@@ -6,19 +6,18 @@ pipeline {
         BACKEND_IMAGE = "${DOCKERHUB_USER}/backend-demo"
         FRONTEND_IMAGE = "${DOCKERHUB_USER}/frontend-app"
         KUBECONFIG = "/home/ubuntu/.kube/config"
-        BUILD_PLAYBOOK = 'ansible/build.yml'    // ملف Playbook لبناء Docker
+        BUILD_PLAYBOOK = 'ansible/build.yml'
     }
 
     stages {
-        // 🔹 Stage يسحب الكود آخر نسخة من GitHub
+        // 🔹 Stage 1: سحب الكود من GitHub
         stage('Checkout') {
             steps {
-                // هذا يضمن التحديث
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
                     doGenerateSubmoduleConfigurations: false,
-                    extensions: [[$class: 'CleanBeforeCheckout']], // يمسح القديم قبل السحب
+                    extensions: [[$class: 'CleanBeforeCheckout']],
                     userRemoteConfigs: [[
                         url: 'git@github.com:SarahMohammed-4/FullStackApp.git',
                         credentialsId: 'github-creds'
@@ -27,6 +26,7 @@ pipeline {
             }
         }
 
+        // 🔹 Stage 2: بناء المشروع (Backend)
         stage('Backend Build - Maven') {
             steps {
                 dir('demo') {
@@ -35,6 +35,7 @@ pipeline {
             }
         }
 
+        // 🔹 Stage 3: بناء ودفع صور Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -43,18 +44,16 @@ pipeline {
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
                     script {
-                        // 🔹 Docker Login آمن باستخدام stdin
                         sh '''
                             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
                         '''
 
-                        // 🔹 Backend Docker Image
-                        sh "docker build --no-cache -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -f demo/Dockerfile demo"
-                        sh "docker push ${BACKEND_IMAGE}:${BUILD_NUMBER}"
+                        echo "🚀 Building and pushing Docker images..."
+                        docker build --no-cache -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -f demo/Dockerfile demo
+                        docker push ${BACKEND_IMAGE}:${BUILD_NUMBER}
 
-                        // 🔹 Frontend Docker Image
-                        sh "docker build --no-cache -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} ./frontend"
-                        sh "docker push ${FRONTEND_IMAGE}:${BUILD_NUMBER}"
+                        docker build --no-cache -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} ./frontend
+                        docker push ${FRONTEND_IMAGE}:${BUILD_NUMBER}
                     }
                 }
             }
@@ -68,6 +67,18 @@ pipeline {
             }
         }
 
+        // 🔹 Stage 4: تحديث تاغات الصور في ملفات الـ K8s
+        stage('Update image tags in K8s manifests') {
+            steps {
+                sh '''
+                    echo "🧩 Updating image tags in deployment files..."
+                    sed -i "s|sarah1mo/backend-demo:.*|sarah1mo/backend-demo:${BUILD_NUMBER}|g" k8s/backend-deployment.yaml
+                    sed -i "s|sarah1mo/frontend-app:.*|sarah1mo/frontend-app:${BUILD_NUMBER}|g" k8s/frontend-deployment.yaml
+                '''
+            }
+        }
+
+        // 🔹 Stage 5: النشر على Kubernetes
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
