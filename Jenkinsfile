@@ -35,7 +35,22 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 3: Frontend Build
+        // 🔹 🟦 Stage 3: SonarQube Backend Analysis
+        stage('SonarQube Backend Analysis') {
+            steps {
+                withSonarQubeEnv('Backend') {
+                    dir('demo') {
+                        sh '''
+                            echo "🔍 Starting SonarQube analysis for Backend..."
+                            mvn clean verify sonar:sonar \
+                              -Dsonar.projectKey=backend
+                        '''
+                    }
+                }
+            }
+        }
+
+        // 🔹 Stage 4: Frontend Build
         stage('Frontend Build - NodeJS') {
             steps {
                 dir('frontend') {
@@ -49,7 +64,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 4: SonarQube Frontend Analysis
+        // 🔹 Stage 5: SonarQube Frontend Analysis
         stage('SonarQube Frontend Analysis') {
             steps {
                 withSonarQubeEnv('Frontend') {
@@ -70,7 +85,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 5: Quality Gate Check (🔧 هذا هو التعديل المهم)
+        // 🔹 Stage 6: Quality Gate Check (يشمل الاثنين)
         stage('Quality Gate Check') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
@@ -79,7 +94,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 6: Upload to Nexus
+        // 🔹 Stage 7: Upload to Nexus
         stage('Upload_To_Nexus') {
             parallel {
                 stage('Upload_Backend') {
@@ -125,7 +140,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 7: Build & Push Docker
+        // 🔹 Stage 8: Build & Push Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -157,7 +172,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 8: Update K8s Image Tags
+        // 🔹 Stage 9: Update K8s Image Tags
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
@@ -168,7 +183,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 9: Deploy to K8s via Ansible
+        // 🔹 Stage 10: Deploy to K8s via Ansible
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
