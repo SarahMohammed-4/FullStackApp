@@ -59,8 +59,8 @@ pipeline {
                                 ${scannerHome}/bin/sonar-scanner \
                                   -Dsonar.projectKey=frontend \
                                   -Dsonar.sources=. \
-                                  -Dsonar.host.url=http://3.127.210.51:9000 \
-                                  -Dsonar.login=sqp_c495e644388f4f6e226bcdee39ae5e9c1a9c1562 \
+                                  -Dsonar.exclusions=node_modules/**,dist/** \
+                                  -Dsonar.host.url=${env.SONAR_HOST_URL} \
                                   -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
                             """
                         }
