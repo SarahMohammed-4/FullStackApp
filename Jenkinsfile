@@ -36,13 +36,15 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 3: بناء مشروع الفرونت داخل Docker (Node 20)
-        stage('Frontend Build - Node20 Container') {
+        // 🔹 Stage 3: بناء مشروع الفرونت (محلي باستخدام Node المثبت)
+        stage('Frontend Build - NodeJS') {
             steps {
                 dir('frontend') {
                     sh '''
-                        echo "🚀 Building frontend inside Node 20 container..."
-                        docker run --rm -v $PWD:/app -w /app node:20 bash -c "npm install && npm run build"
+                        echo "🚀 Starting frontend build (Node.js local)..."
+                        npm install
+                        npm run build
+                        echo "✅ Frontend build completed successfully!"
                     '''
                 }
             }
@@ -56,11 +58,11 @@ pipeline {
                         def scannerHome = tool 'sonar-scanner'
                         dir('frontend') {
                             sh """
+                                echo "🔍 Starting SonarQube analysis for Frontend..."
                                 ${scannerHome}/bin/sonar-scanner \
                                   -Dsonar.projectKey=frontend \
                                   -Dsonar.sources=. \
                                   -Dsonar.exclusions=node_modules/**,dist/** \
-                                  -Dsonar.host.url=${env.SONAR_HOST_URL} \
                                   -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
                             """
                         }
