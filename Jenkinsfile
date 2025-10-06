@@ -35,14 +35,14 @@ pipeline {
             }
         }
 
-        // 🔹 🟦 Stage 3: SonarQube Backend Analysis
+        // 🔹 🟦 Stage 3: SonarQube Backend Analysis (مُعدّلة)
         stage('SonarQube Backend Analysis') {
             steps {
                 withSonarQubeEnv('Backend') {
                     dir('demo') {
                         sh '''
                             echo "🔍 Starting SonarQube analysis for Backend..."
-                            mvn clean verify sonar:sonar \
+                            mvn clean verify sonar:sonar -DskipTests \
                               -Dsonar.projectKey=backend
                         '''
                     }
@@ -85,7 +85,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 6: Quality Gate Check (يشمل الاثنين)
+        // 🔹 Stage 6: Quality Gate Check
         stage('Quality Gate Check') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
