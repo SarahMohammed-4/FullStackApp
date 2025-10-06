@@ -48,7 +48,31 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 4: رفع الباك والفرونت إلى Nexus بشكل متوازي
+        // 🔹 Stage 4: تحليل الجودة عبر SonarQube للفرونت
+        stage('SonarQube Frontend Analysis') {
+            steps {
+                withSonarQubeEnv('Frontend') {
+                    script {
+                        def scannerHome = tool 'sonar-scanner'
+                        dir('frontend') {
+                            sh """
+                                ${scannerHome}/bin/sonar-scanner \
+                                  -Dsonar.projectKey=frontend \
+                                  -Dsonar.sources=. \
+                                  -Dsonar.host.url=http://3.127.210.51:9000 \
+                                  -Dsonar.login=sqp_c495e644388f4f6e226bcdee39ae5e9c1a9c1562 \
+                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                            """
+                        }
+                        timeout(time: 15, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
+                }
+            }
+        }
+
+        // 🔹 Stage 5: رفع الباك والفرونت إلى Nexus بشكل متوازي
         stage('Upload_To_Nexus') {
             parallel {
 
@@ -97,7 +121,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 5: بناء ودفع صور Docker
+        // 🔹 Stage 6: بناء ودفع صور Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -131,7 +155,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 6: تحديث تاغات الصور في ملفات K8s
+        // 🔹 Stage 7: تحديث تاغات الصور في ملفات K8s
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
@@ -142,7 +166,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 7: النشر على Kubernetes باستخدام Ansible
+        // 🔹 Stage 8: النشر على Kubernetes باستخدام Ansible
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
