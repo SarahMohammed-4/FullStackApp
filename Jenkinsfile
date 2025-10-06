@@ -11,13 +11,12 @@ pipeline {
 
     stages {
 
-        // 🔹 Stage 1: سحب الكود من GitHub
+        // 🔹 Stage 1: Checkout
         stage('Checkout') {
             steps {
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: '*/main']],
-                    doGenerateSubmoduleConfigurations: false,
                     extensions: [[$class: 'CleanBeforeCheckout']],
                     userRemoteConfigs: [[
                         url: 'git@github.com:SarahMohammed-4/FullStackApp.git',
@@ -27,7 +26,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 2: بناء المشروع (Backend)
+        // 🔹 Stage 2: Backend Build
         stage('Backend Build - Maven') {
             steps {
                 dir('demo') {
@@ -36,7 +35,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 3: بناء مشروع الفرونت (محلي باستخدام Node المثبت)
+        // 🔹 Stage 3: Frontend Build
         stage('Frontend Build - NodeJS') {
             steps {
                 dir('frontend') {
@@ -50,13 +49,13 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 4: تحليل الجودة عبر SonarQube للفرونت
+        // 🔹 Stage 4: SonarQube Frontend Analysis (✅ مُعدّل)
         stage('SonarQube Frontend Analysis') {
             steps {
                 withSonarQubeEnv('Frontend') {
-                    script {
-                        def scannerHome = tool 'Scanner'
-                        dir('frontend') {
+                    dir('frontend') {
+                        script {
+                            def scannerHome = tool 'Scanner'
                             sh """
                                 echo "🔍 Starting SonarQube analysis for Frontend..."
                                 ${scannerHome}/bin/sonar-scanner \
@@ -66,24 +65,24 @@ pipeline {
                                   -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
                             """
                         }
-                        timeout(time: 15, unit: 'MINUTES') {
-                            waitForQualityGate abortPipeline: true
-                        }
+                    }
+
+                    // ✅ هنا داخل الـ withSonarQubeEnv (الصحيح)
+                    timeout(time: 15, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
                     }
                 }
             }
         }
 
-        // 🔹 Stage 5: رفع الباك والفرونت إلى Nexus بشكل متوازي
+        // 🔹 Stage 5: Upload to Nexus
         stage('Upload_To_Nexus') {
             parallel {
-
                 stage('Upload_Backend') {
                     steps {
                         nexusArtifactUploader(
                             artifacts: [[
                                 artifactId: 'demo',
-                                classifier: '',
                                 file: 'demo/target/demo-0.0.1-SNAPSHOT.jar',
                                 type: 'jar'
                             ]],
@@ -106,7 +105,6 @@ pipeline {
                         nexusArtifactUploader(
                             artifacts: [[
                                 artifactId: 'frontend',
-                                classifier: '',
                                 file: "frontend/frontend-${BUILD_NUMBER}.tgz",
                                 type: 'tgz'
                             ]],
@@ -123,7 +121,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 6: بناء ودفع صور Docker
+        // 🔹 Stage 6: Build & Push Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -136,11 +134,9 @@ pipeline {
                             echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
                             echo "🐳 Building and pushing Docker images..."
 
-                            # Build & Push Backend
                             docker build --no-cache -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -f demo/Dockerfile demo
                             docker push ${BACKEND_IMAGE}:${BUILD_NUMBER}
 
-                            # Build & Push Frontend
                             docker build --no-cache -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} -f frontend/Dockerfile frontend
                             docker push ${FRONTEND_IMAGE}:${BUILD_NUMBER}
                         """
@@ -157,7 +153,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 7: تحديث تاغات الصور في ملفات K8s
+        // 🔹 Stage 7: Update K8s Image Tags
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
@@ -168,7 +164,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 8: النشر على Kubernetes باستخدام Ansible
+        // 🔹 Stage 8: Deploy to K8s via Ansible
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
