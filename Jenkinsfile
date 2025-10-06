@@ -49,7 +49,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 4: SonarQube Frontend Analysis (✅ مُعدّل)
+        // 🔹 Stage 4: SonarQube Frontend Analysis
         stage('SonarQube Frontend Analysis') {
             steps {
                 withSonarQubeEnv('Frontend') {
@@ -66,16 +66,20 @@ pipeline {
                             """
                         }
                     }
-
-                    // ✅ هنا داخل الـ withSonarQubeEnv (الصحيح)
-                    timeout(time: 15, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
                 }
             }
         }
 
-        // 🔹 Stage 5: Upload to Nexus
+        // 🔹 Stage 5: Quality Gate Check (🔧 هذا هو التعديل المهم)
+        stage('Quality Gate Check') {
+            steps {
+                timeout(time: 15, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        // 🔹 Stage 6: Upload to Nexus
         stage('Upload_To_Nexus') {
             parallel {
                 stage('Upload_Backend') {
@@ -121,7 +125,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 6: Build & Push Docker
+        // 🔹 Stage 7: Build & Push Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -153,7 +157,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 7: Update K8s Image Tags
+        // 🔹 Stage 8: Update K8s Image Tags
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
@@ -164,7 +168,7 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 8: Deploy to K8s via Ansible
+        // 🔹 Stage 9: Deploy to K8s via Ansible
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
