@@ -55,7 +55,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('Frontend') {
                     script {
-                        def scannerHome = tool 'sonar-scanner'
+                        def scannerHome = tool 'Scanner'
                         dir('frontend') {
                             sh """
                                 echo "🔍 Starting SonarQube analysis for Frontend..."
