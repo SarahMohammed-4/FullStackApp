@@ -36,28 +36,68 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 3: رفع ملف الـ jar إلى Nexus
-        stage('Upload_Backend') {
+        // 🔹 Stage 3: بناء مشروع الفرونت داخل Docker (Node 20)
+        stage('Frontend Build - Node20 Container') {
             steps {
-                nexusArtifactUploader(
-                    artifacts: [[
-                        artifactId: 'demo',
-                        classifier: '',
-                        file: 'demo/target/demo-0.0.1-SNAPSHOT.jar',
-                        type: 'jar'
-                    ]],
-                    credentialsId: 'Nexus',             // اسم بيانات الدخول في Jenkins Credentials
-                    groupId: 'com.example',             // نفس الـ groupId من الـ POM
-                    nexusUrl: '3.127.210.51:8081',        // عنوان السيرفر
-                    nexusVersion: 'nexus3',             // نوع النكسس
-                    protocol: 'http',
-                    repository: 'backend',              // اسم الريبو داخل Nexus
-                    version: "${BUILD_NUMBER}"          // رقم الإصدار = رقم البناء في Jenkins
-                )
+                dir('frontend') {
+                    sh '''
+                        echo "🚀 Building frontend inside Node 20 container..."
+                        docker run --rm -v $PWD:/app -w /app node:20 bash -c "npm install && npm run build"
+                    '''
+                }
             }
         }
 
-        // 🔹 Stage 4: بناء ودفع صور Docker
+        // 🔹 Stage 4: رفع الباك والفرونت إلى Nexus بشكل متوازي
+        stage('Upload_To_Nexus') {
+            parallel {
+
+                stage('Upload_Backend') {
+                    steps {
+                        nexusArtifactUploader(
+                            artifacts: [[
+                                artifactId: 'demo',
+                                classifier: '',
+                                file: 'demo/target/demo-0.0.1-SNAPSHOT.jar',
+                                type: 'jar'
+                            ]],
+                            credentialsId: 'Nexus',
+                            groupId: 'com.example',
+                            nexusUrl: '3.127.210.51:8081',
+                            nexusVersion: 'nexus3',
+                            protocol: 'http',
+                            repository: 'backend',
+                            version: "${BUILD_NUMBER}"
+                        )
+                    }
+                }
+
+                stage('Upload_Frontend') {
+                    steps {
+                        dir('frontend') {
+                            sh "tar -czf frontend-${BUILD_NUMBER}.tgz -C dist ."
+                        }
+                        nexusArtifactUploader(
+                            artifacts: [[
+                                artifactId: 'frontend',
+                                classifier: '',
+                                file: "frontend/frontend-${BUILD_NUMBER}.tgz",
+                                type: 'tgz'
+                            ]],
+                            credentialsId: 'Nexus',
+                            groupId: 'com.example.frontend',
+                            nexusUrl: '3.127.210.51:8081',
+                            nexusVersion: 'nexus3',
+                            protocol: 'http',
+                            repository: 'frontend',
+                            version: "${BUILD_NUMBER}"
+                        )
+                    }
+                }
+            }
+        }
+
+        // 🔹 Stage 5: بناء ودفع صور Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -68,7 +108,7 @@ pipeline {
                     script {
                         sh """
                             echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
-                            echo " Building and pushing Docker images..."
+                            echo "🐳 Building and pushing Docker images..."
 
                             # Build & Push Backend
                             docker build --no-cache -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -f demo/Dockerfile demo
@@ -91,18 +131,18 @@ pipeline {
             }
         }
 
-        // 🔹 Stage 5: تحديث تاغات الصور في ملفات الـ K8s
+        // 🔹 Stage 6: تحديث تاغات الصور في ملفات K8s
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
-                    echo " Updating image tags in deployment files..."
+                    echo "📝 Updating image tags in deployment files..."
                     sed -i "s|sarah1mo/backend-demo:.*|sarah1mo/backend-demo:${BUILD_NUMBER}|g" k8s/backend-deployment.yaml
                     sed -i "s|sarah1mo/frontend-app:.*|sarah1mo/frontend-app:${BUILD_NUMBER}|g" k8s/frontend-deployment.yaml
                 """
             }
         }
 
-        // 🔹 Stage 6: النشر على Kubernetes باستخدام Ansible
+        // 🔹 Stage 7: النشر على Kubernetes باستخدام Ansible
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
@@ -112,10 +152,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline finished SUCCESSFULLY ✅'
+            echo '🎉 Pipeline finished SUCCESSFULLY ✅'
         }
         failure {
-            echo 'Pipeline failed ❌ - check logs'
+            echo '💥 Pipeline failed ❌ - check logs'
         }
     }
 }
