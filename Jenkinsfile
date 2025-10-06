@@ -160,7 +160,7 @@ pipeline {
                             ]],
                             credentialsId: 'Nexus',
                             groupId: 'com.example.frontend',
-                            nexusUrl: '3.127.210.51:8081',
+                            nexusUrl: '18.199.219.40:8081',
                             nexusVersion: 'nexus3',
                             protocol: 'http',
                             repository: 'frontend',
