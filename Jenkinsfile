@@ -45,7 +45,23 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 3: SonarQube Backend Analysis
+        // 🧪 Stage 3: Backend Test
+        stage('Backend Test - Maven') {
+            steps {
+                dir('demo') {
+                    sh '''
+                        echo "🧪 Running backend tests with test-no-db profile..."
+                        mvn test -Dspring.profiles.active=test-no-db
+                    '''
+                }
+            }
+            post {
+                success { script { stageStatus['Backend Test - Maven'] = 'SUCCESS'; sendStageEmail('Backend Test - Maven', 'SUCCESS') } }
+                failure { script { stageStatus['Backend Test - Maven'] = 'FAILURE'; sendStageEmail('Backend Test - Maven', 'FAILURE') } }
+            }
+        }
+
+        // 🟦 Stage 4: SonarQube Backend Analysis
         stage('SonarQube Backend Analysis') {
             steps {
                 withSonarQubeEnv('Backend') {
@@ -64,7 +80,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 4: Frontend Build
+        // 🟦 Stage 5: Frontend Build
         stage('Frontend Build - NodeJS') {
             steps {
                 dir('frontend') {
@@ -82,7 +98,24 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 5: SonarQube Frontend Analysis
+        // 🧪 Stage 6: Frontend Test
+        stage('Frontend Test - Angular') {
+            steps {
+                dir('frontend') {
+                    sh '''
+                        echo "🧪 Running frontend tests with coverage..."
+                        npm install
+                        npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
+                    '''
+                }
+            }
+            post {
+                success { script { stageStatus['Frontend Test - Angular'] = 'SUCCESS'; sendStageEmail('Frontend Test - Angular', 'SUCCESS') } }
+                failure { script { stageStatus['Frontend Test - Angular'] = 'FAILURE'; sendStageEmail('Frontend Test - Angular', 'FAILURE') } }
+            }
+        }
+
+        // 🟦 Stage 7: SonarQube Frontend Analysis
         stage('SonarQube Frontend Analysis') {
             steps {
                 withSonarQubeEnv('Frontend') {
@@ -107,7 +140,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 6: Quality Gate
+        // 🟦 Stage 8: Quality Gate
         stage('Quality Gate Check') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
@@ -120,10 +153,9 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 7: Upload to Nexus
+        // 🟦 Stage 9: Upload to Nexus
         stage('Upload_To_Nexus') {
             parallel {
-
                 stage('Upload_Backend') {
                     steps {
                         nexusArtifactUploader(
@@ -175,7 +207,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 8: Build & Push Docker
+        // 🟦 Stage 10: Build & Push Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -201,7 +233,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 9: Update image tags
+        // 🟦 Stage 11: Update image tags
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
@@ -216,7 +248,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 10: Deploy to K8s
+        // 🟦 Stage 12: Deploy to K8s
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
