@@ -6,7 +6,7 @@
     KUBECONFIG: /home/ubuntu/.kube/config
 
   tasks:
-    # نسخ جميع ملفات الـ manifests
+   
     - name: Copy k8s manifests to master
       copy:
         src: "{{ item }}"
@@ -23,7 +23,7 @@
         - /var/lib/jenkins/workspace/FullStackApp/k8s/ingress.yaml
 
     # ===== MySQL storage (PV + PVC) =====
-    # هذا الأمر idempotent، سيُنشئ الـ PV/PVC لو ما كانت موجودة ولن يحذفها لاحقًا.
+    
     - name: Apply MySQL storage (PV + PVC) - idempotent
       command: kubectl apply -f /home/ubuntu/k8s/mysql-storage.yaml
       register: apply_storage_result
