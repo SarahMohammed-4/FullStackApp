@@ -5,7 +5,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: fullstackapp.com   # 👈 هذا نفس الاسم اللي حطيتيه في hosts
+    - host: fullstackapp.com   
       http:
         paths:
           - path: /
