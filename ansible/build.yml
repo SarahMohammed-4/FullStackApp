@@ -7,7 +7,7 @@
         name: sarah1mo/backend-demo
         build:
           path: ./demo
-          nocache: true   # 👈 يكسر الكاش للباك اند
+          nocache: true   
         source: build
 
     - name: Build frontend image
@@ -15,5 +15,5 @@
         name: sarah1mo/frontend-app
         build:
           path: ./frontend
-          nocache: true   # 👈 يكسر الكاش للفرونت اند
+          nocache: true   
         source: build
