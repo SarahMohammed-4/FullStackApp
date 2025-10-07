@@ -12,16 +12,28 @@
         src: "{{ item }}"
         dest: /home/ubuntu/k8s/
       with_items:
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/mysql-storage.yaml
         - /var/lib/jenkins/workspace/FullStackApp/k8s/mysql-secret.yaml
         - /var/lib/jenkins/workspace/FullStackApp/k8s/mysql-deployment.yaml
-        - /var/lib/jenkins/workspace/FullStackApp/k8s/mysql-service.yaml   # خدمة MySQL
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/mysql-service.yaml
         - /var/lib/jenkins/workspace/FullStackApp/k8s/backend-deployment.yaml
-        - /var/lib/jenkins/workspace/FullStackApp/k8s/backend-service.yaml # خدمة Backend
+        - /var/lib/jenkins/workspace/FullStackApp/k8s/backend-service.yaml
         - /var/lib/jenkins/workspace/FullStackApp/k8s/frontend-deployment.yaml
         - /var/lib/jenkins/workspace/FullStackApp/k8s/frontend-service.yaml
         - /var/lib/jenkins/workspace/FullStackApp/k8s/ingress.yaml
 
-    # ===== MySQL =====
+    # ===== MySQL storage (PV + PVC) =====
+    # هذا الأمر idempotent، سيُنشئ الـ PV/PVC لو ما كانت موجودة ولن يحذفها لاحقًا.
+    - name: Apply MySQL storage (PV + PVC) - idempotent
+      command: kubectl apply -f /home/ubuntu/k8s/mysql-storage.yaml
+      register: apply_storage_result
+      ignore_errors: no
+
+    # ===== MySQL secret =====
+    - name: Apply MySQL secret
+      command: kubectl apply -f /home/ubuntu/k8s/mysql-secret.yaml
+
+    # ===== MySQL Deployment =====
     - name: Delete old MySQL deployment if exists
       command: kubectl delete -f /home/ubuntu/k8s/mysql-deployment.yaml --ignore-not-found=true
 
