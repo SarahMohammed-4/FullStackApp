@@ -5,8 +5,8 @@ metadata:
 spec:
   selector:
     app: backend
-  type: ClusterIP   # ✅ خليه ClusterIP بدل NodePort
+  type: ClusterIP   #  ClusterIP بدل NodePort
   ports:
     - protocol: TCP
-      port: 8080       # البورت اللي يكشفه السيرفس
-      targetPort: 8080 # البورت داخل البود
+      port: 8080       
+      targetPort: 8080 
