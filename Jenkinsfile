@@ -13,7 +13,7 @@ pipeline {
 
     stages {
 
-        // 🟦 Stage 1: Checkout
+        // 🟦 Stage 1: Checkout (واحد فقط بعد حذف التكرار)
         stage('Checkout') {
             steps {
                 checkout([
@@ -36,7 +36,7 @@ pipeline {
         stage('Backend Build - Maven') {
             steps {
                 dir('demo') {
-                    sh 'mvn clean package '
+                    sh 'mvn clean package'
                 }
             }
             post {
@@ -45,42 +45,45 @@ pipeline {
             }
         }
 
-        // Stage 3: Backend Test
-        stage('Backend Test - Maven') {
-            steps {
-                dir('demo') {
-                    sh '''
-                        echo "Running backend tests with test-no-db profile..."
-                        mvn test -Dspring.profiles.active=test-no-db
-                    '''
+        // 🟦 Stage 3: Backend Test + SonarQube Backend (Parallel)
+        stage('Backend Test & SonarQube Backend') {
+            parallel {
+                stage('Backend Test - Maven') {
+                    steps {
+                        dir('demo') {
+                            sh '''
+                                echo "Running backend tests with test-no-db profile..."
+                                mvn test -Dspring.profiles.active=test-no-db
+                            '''
+                        }
+                    }
+                    post {
+                        success { script { stageStatus['Backend Test - Maven'] = 'SUCCESS'; sendStageEmail('Backend Test - Maven', 'SUCCESS') } }
+                        failure { script { stageStatus['Backend Test - Maven'] = 'FAILURE'; sendStageEmail('Backend Test - Maven', 'FAILURE') } }
+                    }
                 }
-            }
-            post {
-                success { script { stageStatus['Backend Test - Maven'] = 'SUCCESS'; sendStageEmail('Backend Test - Maven', 'SUCCESS') } }
-                failure { script { stageStatus['Backend Test - Maven'] = 'FAILURE'; sendStageEmail('Backend Test - Maven', 'FAILURE') } }
-            }
-        }
 
-        // 🟦 Stage 4: SonarQube Backend Analysis
-        stage('SonarQube Backend Analysis') {
-            steps {
-                withSonarQubeEnv('Backend') {
-                    dir('demo') {
-                        sh '''
-                            echo "Starting SonarQube analysis for Backend..."
-                            mvn clean verify sonar:sonar -DskipTests \
-                              -Dsonar.projectKey=backend
-                        '''
+                stage('SonarQube Backend Analysis') {
+                    steps {
+                        withSonarQubeEnv('Backend') {
+                            dir('demo') {
+                                sh '''
+                                    echo "Starting SonarQube analysis for Backend..."
+                                    mvn clean verify sonar:sonar -DskipTests \
+                                      -Dsonar.projectKey=backend
+                                '''
+                            }
+                        }
+                    }
+                    post {
+                        success { script { stageStatus['SonarQube Backend Analysis'] = 'SUCCESS'; sendStageEmail('SonarQube Backend Analysis', 'SUCCESS') } }
+                        failure { script { stageStatus['SonarQube Backend Analysis'] = 'FAILURE'; sendStageEmail('SonarQube Backend Analysis', 'FAILURE') } }
                     }
                 }
             }
-            post {
-                success { script { stageStatus['SonarQube Backend Analysis'] = 'SUCCESS'; sendStageEmail('SonarQube Backend Analysis', 'SUCCESS') } }
-                failure { script { stageStatus['SonarQube Backend Analysis'] = 'FAILURE'; sendStageEmail('SonarQube Backend Analysis', 'FAILURE') } }
-            }
         }
 
-        // 🟦 Stage 5: Frontend Build
+        // 🟦 Stage 4: Frontend Build
         stage('Frontend Build - NodeJS') {
             steps {
                 dir('frontend') {
@@ -98,50 +101,53 @@ pipeline {
             }
         }
 
-        // Stage 6: Frontend Test (Chrome Fixed)
-        stage('Frontend Test - Angular') {
-            steps {
-                dir('frontend') {
-                    sh '''
-                        echo "Running frontend tests with coverage..."
-                        npm install
-                        export CHROME_BIN=$(which google-chrome)
-                        npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
-                    '''
-                }
-            }
-            post {
-                success { script { stageStatus['Frontend Test - Angular'] = 'SUCCESS'; sendStageEmail('Frontend Test - Angular', 'SUCCESS') } }
-                failure { script { stageStatus['Frontend Test - Angular'] = 'FAILURE'; sendStageEmail('Frontend Test - Angular', 'FAILURE') } }
-            }
-        }
-
-        // 🟦 Stage 7: SonarQube Frontend Analysis
-        stage('SonarQube Frontend Analysis') {
-            steps {
-                withSonarQubeEnv('Frontend') {
-                    dir('frontend') {
-                        script {
-                            def scannerHome = tool 'Scanner'
-                            sh """
-                                echo "Starting SonarQube analysis for Frontend..."
-                                ${scannerHome}/bin/sonar-scanner \
-                                  -Dsonar.projectKey=frontend \
-                                  -Dsonar.sources=. \
-                                  -Dsonar.exclusions=node_modules/**,dist/** \
-                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-                            """
+        // 🟦 Stage 5: Frontend Test + SonarQube Frontend (Parallel)
+        stage('Frontend Test & SonarQube Frontend') {
+            parallel {
+                stage('Frontend Test - Angular') {
+                    steps {
+                        dir('frontend') {
+                            sh '''
+                                echo "Running frontend tests with coverage..."
+                                npm install
+                                export CHROME_BIN=$(which google-chrome)
+                                npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
+                            '''
                         }
+                    }
+                    post {
+                        success { script { stageStatus['Frontend Test - Angular'] = 'SUCCESS'; sendStageEmail('Frontend Test - Angular', 'SUCCESS') } }
+                        failure { script { stageStatus['Frontend Test - Angular'] = 'FAILURE'; sendStageEmail('Frontend Test - Angular', 'FAILURE') } }
+                    }
+                }
+
+                stage('SonarQube Frontend Analysis') {
+                    steps {
+                        withSonarQubeEnv('Frontend') {
+                            dir('frontend') {
+                                script {
+                                    def scannerHome = tool 'Scanner'
+                                    sh """
+                                        echo "Starting SonarQube analysis for Frontend..."
+                                        ${scannerHome}/bin/sonar-scanner \
+                                          -Dsonar.projectKey=frontend \
+                                          -Dsonar.sources=. \
+                                          -Dsonar.exclusions=node_modules/**,dist/** \
+                                          -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                                    """
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        success { script { stageStatus['SonarQube Frontend Analysis'] = 'SUCCESS'; sendStageEmail('SonarQube Frontend Analysis', 'SUCCESS') } }
+                        failure { script { stageStatus['SonarQube Frontend Analysis'] = 'FAILURE'; sendStageEmail('SonarQube Frontend Analysis', 'FAILURE') } }
                     }
                 }
             }
-            post {
-                success { script { stageStatus['SonarQube Frontend Analysis'] = 'SUCCESS'; sendStageEmail('SonarQube Frontend Analysis', 'SUCCESS') } }
-                failure { script { stageStatus['SonarQube Frontend Analysis'] = 'FAILURE'; sendStageEmail('SonarQube Frontend Analysis', 'FAILURE') } }
-            }
         }
 
-        // 🟦 Stage 8: Quality Gate
+        // 🟦 Stage 6: Quality Gate
         stage('Quality Gate Check') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
@@ -154,7 +160,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 9: Upload to Nexus
+        // 🟦 Stage 7: Upload to Nexus (Parallel)
         stage('Upload_To_Nexus') {
             parallel {
                 stage('Upload_Backend') {
@@ -208,7 +214,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 10: Build & Push Docker
+        // 🟦 Stage 8: Build & Push Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -234,7 +240,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 11: Update image tags
+        // 🟦 Stage 9: Update image tags
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
@@ -249,7 +255,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 12: Deploy to K8s
+        // 🟦 Stage 10: Deploy to K8s
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
@@ -291,6 +297,7 @@ pipeline {
     }
 }
 
+// 📨 دالة إرسال إيميل لكل Stage
 def sendStageEmail(String stageName, String status) {
     def color = (status == 'SUCCESS') ? 'green' : 'red'
     def body = """
