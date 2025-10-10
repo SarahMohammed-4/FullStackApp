@@ -13,7 +13,7 @@ pipeline {
 
     stages {
 
-        // 🟩 Stage 1: Checkout
+        // Stage 1: Checkout
         stage('Checkout') {
             steps {
                 checkout([
@@ -32,7 +32,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 2: Build & Test (Parallel)
+        // Stage 2: Build & Test (Parallel)
         stage('Build & Test') {
             parallel {
 
@@ -74,7 +74,7 @@ pipeline {
             }
         }
 
-        // 🟨 Stage 3: SonarQube Analysis (Parallel)
+        // Stage 3: SonarQube Analysis (Parallel)
         stage('SonarQube Analysis') {
             parallel {
 
@@ -122,7 +122,7 @@ pipeline {
             }
         }
 
-        // 🟦 Stage 4: Quality Gate
+        // Stage 4: Quality Gate
         stage('Quality Gate Check') {
             steps {
                 timeout(time: 15, unit: 'MINUTES') {
@@ -135,7 +135,7 @@ pipeline {
             }
         }
 
-        // 🟧 Stage 5: Upload to Nexus (Parallel)
+        // Stage 5: Upload to Nexus (Parallel)
         stage('Upload_To_Nexus') {
             parallel {
 
@@ -190,7 +190,7 @@ pipeline {
             }
         }
 
-        // 🟥 Stage 6: Build & Push Docker
+        // Stage 6: Build & Push Docker
         stage('Build_And_Push_Docker') {
             steps {
                 withCredentials([usernamePassword(
@@ -216,7 +216,7 @@ pipeline {
             }
         }
 
-        // 🟪 Stage 7: Update image tags
+        // Stage 7: Update image tags
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
@@ -231,7 +231,7 @@ pipeline {
             }
         }
 
-        // 🟫 Stage 8: Deploy to Kubernetes
+        // Stage 8: Deploy to Kubernetes
         stage('Deploy to Kubernetes (Ansible)') {
             steps {
                 sh 'ansible-playbook -i ansible/inventory.ini ansible/deploy.yml'
