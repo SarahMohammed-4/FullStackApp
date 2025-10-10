@@ -45,12 +45,12 @@ pipeline {
             }
         }
 
-        // 🧪 Stage 3: Backend Test
+        // Stage 3: Backend Test
         stage('Backend Test - Maven') {
             steps {
                 dir('demo') {
                     sh '''
-                        echo "🧪 Running backend tests with test-no-db profile..."
+                        echo "Running backend tests with test-no-db profile..."
                         mvn test -Dspring.profiles.active=test-no-db
                     '''
                 }
@@ -67,7 +67,7 @@ pipeline {
                 withSonarQubeEnv('Backend') {
                     dir('demo') {
                         sh '''
-                            echo "🔍 Starting SonarQube analysis for Backend..."
+                            echo "Starting SonarQube analysis for Backend..."
                             mvn clean verify sonar:sonar -DskipTests \
                               -Dsonar.projectKey=backend
                         '''
@@ -85,10 +85,10 @@ pipeline {
             steps {
                 dir('frontend') {
                     sh '''
-                        echo "🚀 Starting frontend build..."
+                        echo "Starting frontend build..."
                         npm install
                         npm run build
-                        echo "✅ Frontend build completed successfully!"
+                        echo "Frontend build completed successfully!"
                     '''
                 }
             }
@@ -98,12 +98,12 @@ pipeline {
             }
         }
 
-        // 🧪 Stage 6: Frontend Test (Chrome Fixed)
+        // Stage 6: Frontend Test (Chrome Fixed)
         stage('Frontend Test - Angular') {
             steps {
                 dir('frontend') {
                     sh '''
-                        echo "🧪 Running frontend tests with coverage..."
+                        echo "Running frontend tests with coverage..."
                         npm install
                         export CHROME_BIN=$(which google-chrome)
                         npm test -- --watch=false --browsers=ChromeHeadless --code-coverage
@@ -124,7 +124,7 @@ pipeline {
                         script {
                             def scannerHome = tool 'Scanner'
                             sh """
-                                echo "🔍 Starting SonarQube analysis for Frontend..."
+                                echo "Starting SonarQube analysis for Frontend..."
                                 ${scannerHome}/bin/sonar-scanner \
                                   -Dsonar.projectKey=frontend \
                                   -Dsonar.sources=. \
@@ -167,7 +167,7 @@ pipeline {
                             ]],
                             credentialsId: 'Nexus',
                             groupId: 'com.example',
-                            nexusUrl: '54.93.72.185:8081',
+                            nexusUrl: '52.57.155.74:8081',
                             nexusVersion: 'nexus3',
                             protocol: 'http',
                             repository: 'backend',
@@ -193,7 +193,7 @@ pipeline {
                             ]],
                             credentialsId: 'Nexus',
                             groupId: 'com.example.frontend',
-                            nexusUrl: '54.93.72.185:8081',
+                            nexusUrl: '52.57.155.74:8081',
                             nexusVersion: 'nexus3',
                             protocol: 'http',
                             repository: 'frontend',
@@ -219,7 +219,7 @@ pipeline {
                     script {
                         sh """
                             echo "\$DOCKER_PASSWORD" | docker login -u "\$DOCKER_USERNAME" --password-stdin
-                            echo "🐳 Building and pushing Docker images..."
+                            echo "Building and pushing Docker images..."
                             docker build --no-cache -t ${BACKEND_IMAGE}:${BUILD_NUMBER} -f demo/Dockerfile demo
                             docker push ${BACKEND_IMAGE}:${BUILD_NUMBER}
                             docker build --no-cache -t ${FRONTEND_IMAGE}:${BUILD_NUMBER} -f frontend/Dockerfile frontend
@@ -238,7 +238,7 @@ pipeline {
         stage('Update image tags in K8s manifests') {
             steps {
                 sh """
-                    echo "📝 Updating image tags in deployment files..."
+                    echo "Updating image tags in deployment files..."
                     sed -i "s|sarah1mo/backend-demo:.*|sarah1mo/backend-demo:${BUILD_NUMBER}|g" k8s/backend-deployment.yaml
                     sed -i "s|sarah1mo/frontend-app:.*|sarah1mo/frontend-app:${BUILD_NUMBER}|g" k8s/frontend-deployment.yaml
                 """
