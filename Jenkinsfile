@@ -29,7 +29,7 @@ pipeline {
                     branches: [[name: '*/main']],
                     userRemoteConfigs: [[
                         credentialsId: 'git-credentials',
-                        url: 'https://github.com/sarah1mo/DevOpsF.git'
+                        url: 'https://github.com/sarah1mo/FullStackApp.git'
                     ]]
                 ])
             }
