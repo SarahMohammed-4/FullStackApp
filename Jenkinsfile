@@ -12,7 +12,15 @@ pipeline {
 
     stages {
 
-        // 🟩 1️⃣ Checkout
+        // 🟩 1️⃣ Checkout SCM (اللي Jenkins يسويه تلقائي)
+        stage('Checkout SCM') {
+            steps {
+                echo 'Checking out source code from SCM...'
+                checkout scm
+            }
+        }
+
+        // 🟩 2️⃣ Checkout (حقك اليدوي)
         stage('Checkout') {
             steps {
                 cleanWs()
@@ -27,14 +35,14 @@ pipeline {
             }
         }
 
-        // 🟦 2️⃣ Build & Test (Parallel)
+        // 🟦 3️⃣ Build & Test (Frontend + Backend Parallel)
         stage('Build & Test') {
             parallel {
                 stage('Build & Test Frontend') {
                     steps {
                         dir('frontend') {
                             sh '''
-                                echo "Running frontend build & test..."
+                                echo "Running frontend build and test..."
                                 npm install
                                 npm run build
                                 export CHROME_BIN=$(which google-chrome)
@@ -47,7 +55,7 @@ pipeline {
                     steps {
                         dir('demo') {
                             sh '''
-                                echo "Running backend build & test..."
+                                echo "Running backend build and test..."
                                 mvn clean package -DskipTests=false
                             '''
                         }
@@ -56,7 +64,7 @@ pipeline {
             }
         }
 
-        // 🟨 3️⃣ SonarQube Analysis (Parallel)
+        // 🟨 4️⃣ SonarQube Analysis (Frontend + Backend Parallel)
         stage('SonarQube Analysis') {
             parallel {
                 stage('SonarQube Frontend') {
@@ -94,7 +102,7 @@ pipeline {
             }
         }
 
-        // 🟧 4️⃣ Upload to Nexus (Parallel)
+        // 🟧 5️⃣ Upload to Nexus (Frontend + Backend Parallel)
         stage('Upload_To_Nexus') {
             parallel {
                 stage('Upload_Backend') {
@@ -122,7 +130,7 @@ pipeline {
             }
         }
 
-        // 🟥 5️⃣ Build and Push Docker Images
+        // 🟥 6️⃣ Build and Push Docker Images
         stage('Build_And_Push_Docker') {
             steps {
                 sh '''
@@ -135,7 +143,7 @@ pipeline {
             }
         }
 
-        // 🟪 6️⃣ Deploy to Kubernetes
+        // 🟪 7️⃣ Deploy to Kubernetes
         stage('Deploy_Kubernetes') {
             steps {
                 sh '''
@@ -145,7 +153,7 @@ pipeline {
             }
         }
 
-        // 🟫 7️⃣ Send Email Report
+        // 🟫 8️⃣ Send Email Report
         stage('Send Email Report') {
             steps {
                 script {
